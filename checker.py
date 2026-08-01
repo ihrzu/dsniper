@@ -12,11 +12,47 @@ CUSTOM_LENGTH = int(os.getenv("CUSTOM_LENGTH", "4"))
 GITHUB_API_URL = "https://api.github.com/users/{}"
 HEADERS = {"User-Agent": "GitHub-Handle-Checker/1.0"}
 
-REAL_WORDS = [
-    "spark", "vivid", "orbit", "cloud", "pixel", "stone", "amber",
-    "breeze", "shadow", "summit", "drift", "pulse", "frost", "blaze",
-    "echo", "prism", "solar", "matrix", "vertex", "vector", "atlas"
+# Components for dynamic "AI-style" real word generation
+PREFIXES = [
+    "hyper", "cyber", "omni", "neo", "retro", "meta", "crypto", "astro",
+    "ultra", "super", "micro", "macro", "proto", "synth", "techno", "zen"
 ]
+
+ROOT_WORDS = [
+    "spark", "vivid", "orbit", "cloud", "pixel", "stone", "amber", "breeze",
+    "shadow", "summit", "drift", "pulse", "frost", "blaze", "echo", "prism",
+    "solar", "matrix", "vertex", "vector", "atlas", "lunar", "nova", "shift",
+    "vault", "nexus", "surge", "spark", "bloom", "forge", "craft", "realm"
+]
+
+SUFFIXES = [
+    "lab", "hub", "io", "hq", "sys", "tech", "box", "flow", "mind", "wave",
+    "core", "net", "sync", "bot", "base", "grid", "verse", "link", "craft"
+]
+
+
+def generate_ai_words(count):
+    """Generates unique, realistic pseudo-AI words by combining linguistic structures."""
+    generated = set()
+    
+    while len(generated) < count:
+        pattern = random.choice([1, 2, 3])
+        
+        if pattern == 1:
+            # Structure: Prefix + Root (e.g., hypernova, cyberdrift)
+            word = random.choice(PREFIXES) + random.choice(ROOT_WORDS)
+        elif pattern == 2:
+            # Structure: Root + Suffix (e.g., cloudhq, pixelwave)
+            word = random.choice(ROOT_WORDS) + random.choice(SUFFIXES)
+        else:
+            # Structure: Two Root Words Combined (e.g., frostpulse, solarshadow)
+            word1, word2 = random.sample(ROOT_WORDS, 2)
+            word = word1 + word2
+            
+        generated.add(word)
+        
+    return list(generated)
+
 
 def generate_usernames(choice, count, custom_len):
     letters = string.ascii_lowercase
@@ -41,10 +77,10 @@ def generate_usernames(choice, count, custom_len):
             results.append("".join(random.choices(alphanumeric, k=custom_len)))
 
     elif choice == "words":
-        for _ in range(count):
-            results.append(random.choice(REAL_WORDS))
+        results = generate_ai_words(count)
 
     return results
+
 
 def check_github_username(username):
     url = GITHUB_API_URL.format(username)
@@ -60,6 +96,7 @@ def check_github_username(username):
             return f"UNKNOWN ({response.status_code})"
     except requests.RequestException:
         return "ERROR"
+
 
 def send_to_discord(username):
     if not DISCORD_WEBHOOK_URL:
@@ -82,20 +119,22 @@ def send_to_discord(username):
     except requests.RequestException:
         pass
 
+
 def main():
-    print(f"=== MOBILE GITHUB ACTION CHECKER ===")
+    print("=== MOBILE GITHUB ACTION CHECKER ===")
     print(f"Option: {CHOICE} | Amount: {AMOUNT} | Custom Len: {CUSTOM_LENGTH}\n")
 
     usernames = generate_usernames(CHOICE, AMOUNT, CUSTOM_LENGTH)
 
     for name in usernames:
         status = check_github_username(name)
-        print(f"'{name:<12}' -> {status}")
+        print(f"'{name:<15}' -> {status}")
 
         if status == "AVAILABLE":
             send_to_discord(name)
 
         time.sleep(1)
+
 
 if __name__ == "__main__":
     main()
