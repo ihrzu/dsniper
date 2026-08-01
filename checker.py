@@ -9,7 +9,6 @@ CHOICE = os.getenv("USER_CHOICE", "4l").strip().lower()
 AMOUNT = int(os.getenv("USER_AMOUNT", "5"))
 CUSTOM_LENGTH = int(os.getenv("CUSTOM_LENGTH", "4"))
 
-# AI-style word components
 PREFIXES = [
     "hyper", "cyber", "omni", "neo", "retro", "meta", "crypto", "astro",
     "ultra", "super", "micro", "macro", "proto", "synth", "techno", "zen"
@@ -73,30 +72,25 @@ def generate_usernames(choice, count, custom_len):
 
 def send_to_discord(handles, choice_type):
     if not DISCORD_WEBHOOK_URL:
-        print("[!] No Discord Webhook URL provided.")
+        print("[!] ERROR: DISCORD_WEBHOOK_URL secret is missing!")
         return
 
-    # Formats handles into a clean bulleted list for Discord
+    # Clean text payload
     handle_list = "\n".join([f"• `{h}`" for h in handles])
+    message = f"🎲 **Generated Handles ({choice_type.upper()})**\n\n{handle_list}"
 
     payload = {
-        "username": "Discord Handle Generator",
-        "embeds": [{
-            "title": f"🎲 Generated Discord Handles ({choice_type.upper()})",
-            "description": f"Here are your generated handles to test on Discord:\n\n{handle_list}",
-            "color": 5814783,  # Discord Blurple Color
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-        }]
+        "content": message
     }
 
     try:
-        response = requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
+        response = requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=10)
         if response.status_code in [200, 204]:
-            print(f"[+] Sent {len(handles)} handles to Discord!")
+            print(f"[+] SUCCESS: Sent {len(handles)} handles to Discord!")
         else:
-            print(f"[!] Webhook error status: {response.status_code}")
+            print(f"[!] Discord Error {response.status_code}: {response.text}")
     except requests.RequestException as e:
-        print(f"[!] Failed to send webhook: {e}")
+        print(f"[!] Network error: {e}")
 
 
 def main():
@@ -104,11 +98,12 @@ def main():
     print(f"Option: {CHOICE} | Amount: {AMOUNT} | Custom Len: {CUSTOM_LENGTH}\n")
 
     usernames = generate_usernames(CHOICE, AMOUNT, CUSTOM_LENGTH)
-    
+
     print("Generated Handles:")
     for u in usernames:
         print(f" - {u}")
 
+    print("\nSending to Webhook...")
     send_to_discord(usernames, CHOICE)
 
 
